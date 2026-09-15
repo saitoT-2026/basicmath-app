@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>計算トレーニング - グレード1〜3</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      user-select: none;
+    }
+
+    body {
+      background-color: #f4f6f8;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      color: #333;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 600px;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+      padding: 24px;
+      margin: 16px;
+      position: relative;
+      min-height: 540px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .screen {
+      display: none;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #eef0f2;
+      padding-bottom: 12px;
+    }
+
+    .title {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #1a202c;
+    }
+
+    .subtitle {
+      font-size: 1.1rem;
+      color: #4a5568;
+    }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      margin-top: 12px;
+    }
+
+    .card {
+      background: #ffffff;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+      border-color: #3182ce;
+    }
+
+    .card-title {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #2d3748;
+    }
+
+    .card-desc {
+      font-size: 0.95rem;
+      color: #718096;
+      margin-top: 4px;
+    }
+
+    .card-badge {
+      background: #ebf8ff;
+      color: #2b6cb0;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 0.9rem;
+    }
+
+    .stats-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 1rem;
+      font-weight: bold;
+      color: #4a5568;
+      margin-bottom: 12px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #edf2f7;
+      border-radius: 4px;
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: #3182ce;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .problem-box {
+      font-size: 3rem;
+      font-weight: bold;
+      text-align: center;
+      margin: 10px 0 20px 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .answer-box {
+      min-width: 100px;
+      height: 70px;
+      padding: 0 12px;
+      border: 3px solid #3182ce;
+      border-radius: 12px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 2.8rem;
+      color: #2b6cb0;
+      background: #f7fafc;
+    }
+
+    .keypad {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 10px;
+      margin-top: auto;
+    }
+
+    .key-btn {
+      background: #edf2f7;
+      border: none;
+      border-radius: 10px;
+      padding: 16px 0;
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #2d3748;
+      cursor: pointer;
+      transition: background 0.1s, transform 0.1s;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .key-btn:active {
+      transform: scale(0.95);
+      background: #e2e8f0;
+    }
+
+    .key-minus {
+      background: #e2e8f0;
+      color: #2d3748;
+    }
+
+    .key-clear {
+      background: #fed7d7;
+      color: #9b2c2c;
+      font-size: 1rem;
+    }
+
+    .key-enter {
+      background: #c6f6d5;
+      color: #22543d;
+      font-size: 1rem;
+    }
+
+    .giveup-btn {
+      background: #edf2f7;
+      border: 1px solid #cbd5e0;
+      color: #e53e3e;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .giveup-btn:hover {
+      background: #fed7d7;
+      border-color: #feb2b2;
+    }
+
+    .result-box {
+      text-align: center;
+      margin: auto 0;
+    }
+
+    .result-status {
+      font-size: 2.5rem;
+      font-weight: bold;
+      margin-bottom: 12px;
+    }
+
+    .status-pass {
+      color: #38a169;
+    }
+
+    .status-fail {
+      color: #dd6b20;
+    }
+
+    .result-score {
+      font-size: 1.5rem;
+      color: #4a5568;
+      margin-bottom: 24px;
+    }
+
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .action-btn {
+      background: #3182ce;
+      color: white;
+      border: none;
+      padding: 14px;
+      border-radius: 10px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .action-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(49, 130, 206, 0.3);
+    }
+
+    .secondary-btn {
+      background: #edf2f7;
+      color: #4a5568;
+    }
+
+    .secondary-btn:hover {
+      background: #e2e8f0;
+      box-shadow: none;
+    }
+
+    .nav-btn {
+      background: none;
+      border: none;
+      color: #3182ce;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-container">
+
+  <!-- 1. グレード選択画面 -->
+  <div id="screen-grade" class="screen active">
+    <div class="header">
+      <div class="title">グレード選択</div>
+    </div>
+    <div class="card-grid">
+      <div class="card" onclick="selectGrade(1)">
+        <div>
+          <div class="card-title">グレード１</div>
+          <div class="card-desc">1桁の足し算・引き算・正負の計算</div>
+        </div>
+        <div class="card-badge">挑戦する</div>
+      </div>
+      <div class="card" onclick="selectGrade(2)">
+        <div>
+          <div class="card-title">グレード２</div>
+          <div class="card-desc">2桁の足し算・引き算（くり上がり・くり下がり）</div>
+        </div>
+        <div class="card-badge">挑戦する</div>
+      </div>
+      <div class="card" onclick="selectGrade(3)">
+        <div>
+          <div class="card-title">グレード３</div>
+          <div class="card-desc">掛け算（九九）と割り算</div>
+        </div>
+        <div class="card-badge">挑戦する</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. レベル選択画面 -->
+  <div id="screen-level" class="screen">
+    <div class="header">
+      <button class="nav-btn" onclick="showScreen('screen-grade')">← グレード選択に戻る</button>
+      <div class="subtitle" id="level-grade-title">グレード１</div>
+    </div>
+    <div class="card-grid" id="level-card-grid"></div>
+  </div>
+
+  <!-- 3. トレーニング画面 -->
+  <div id="screen-training" class="screen">
+    <div class="header">
+      <div class="subtitle" id="training-level-title">レベル1</div>
+      <button class="giveup-btn" onclick="giveUp()">ギブアップ</button>
+    </div>
+
+    <div class="stats-bar">
+      <span id="question-count">1 / 10 問</span>
+      <span id="accuracy-rate">正答率: 0%</span>
+    </div>
+
+    <div class="progress-bar">
+      <div id="progress-fill" class="progress-fill"></div>
+    </div>
+
+    <div class="problem-box">
+      <span id="problem-text">3 + 2 =</span>
+      <div id="answer-display" class="answer-box"></div>
+    </div>
+
+    <div class="keypad">
+      <button class="key-btn" onclick="inputNum(1)">1</button>
+      <button class="key-btn" onclick="inputNum(2)">2</button>
+      <button class="key-btn" onclick="inputNum(3)">3</button>
+      <button class="key-btn" onclick="inputNum(4)">4</button>
+      <button class="key-btn" onclick="inputNum(5)">5</button>
+      <button class="key-btn key-clear" onclick="clearInput()">消去</button>
+
+      <button class="key-btn" onclick="inputNum(6)">6</button>
+      <button class="key-btn" onclick="inputNum(7)">7</button>
+      <button class="key-btn" onclick="inputNum(8)">8</button>
+      <button class="key-btn" onclick="inputNum(9)">9</button>
+      <button class="key-btn" onclick="inputNum(0)">0</button>
+      <button class="key-btn key-minus" onclick="inputMinus()">-</button>
+
+      <button class="key-btn key-enter" style="grid-column: span 6;" onclick="submitAnswer()">決定</button>
+    </div>
+  </div>
+
+  <!-- 4. 結果画面 -->
+  <div id="screen-result" class="screen">
+    <div class="result-box">
+      <div id="result-status" class="result-status"></div>
+      <div id="result-score" class="result-score"></div>
+
+      <div class="btn-group">
+        <button class="action-btn" onclick="retryLevel()">もう一度チャレンジ</button>
+        <button id="next-btn" class="action-btn" onclick="nextLevelOrGrade()">次のレベル</button>
+        <button class="action-btn secondary-btn" onclick="showScreen('screen-level')">レベル選択に戻る</button>
+        <button class="action-btn secondary-btn" onclick="showScreen('screen-grade')">グレード選択に戻る</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let currentGrade = 1;
+  let currentLevel = 1;
+  let currentQuestionIndex = 0;
+  let score = 0;
+  let currentAnswer = 0;
+  let inputVal = "";
+
+  const TOTAL_QUESTIONS = 10;
+
+  const levelConfigs = {
+    1: [
+      { title: "レベル1", desc: "1から5の足し算" },
+      { title: "レベル2", desc: "1から9の足し算" },
+      { title: "レベル3", desc: "1から5の引き算" },
+      { title: "レベル4", desc: "1から9の引き算" },
+      { title: "レベル5", desc: "-9から+9までの2数の加法・減法" }
+    ],
+    2: [
+      { title: "レベル1", desc: "くり上がりのない足し算" },
+      { title: "レベル2", desc: "くり上がりのある足し算" },
+      { title: "レベル3", desc: "くり下がりのない引き算" },
+      { title: "レベル4", desc: "くり下がりのある引き算" }
+    ],
+    3: [
+      { title: "レベル1", desc: "九九（1桁 × 1桁）" },
+      { title: "レベル2", desc: "割り算（あまりなし・九九の逆）" },
+      { title: "レベル3", desc: "2桁×1桁・大きな数の割り算" },
+      { title: "レベル4", desc: "掛け算と割り算のミックス" }
+    ]
+  };
+
+  function showScreen(screenId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(screenId).classList.add('active');
+  }
+
+  function selectGrade(grade) {
+    currentGrade = grade;
+    document.getElementById('level-grade-title').textContent = `グレード${grade}`;
+    
+    const grid = document.getElementById('level-card-grid');
+    grid.innerHTML = "";
+    
+    levelConfigs[grade].forEach((config, idx) => {
+      const levelNum = idx + 1;
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.onclick = () => startLevel(levelNum);
+      card.innerHTML = `
+        <div>
+          <div class="card-title">${config.title}</div>
+          <div class="card-desc">${config.desc}</div>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+
+    showScreen('screen-level');
+  }
+
+  function startLevel(level) {
+    currentLevel = level;
+    currentQuestionIndex = 0;
+    score = 0;
+    document.getElementById('training-level-title').textContent = `グレード${currentGrade} - レベル ${level}`;
+    showScreen('screen-training');
+    nextQuestion();
+  }
+
+  function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function generateProblem(grade, level) {
+    let num1, num2, op, ans;
+
+    if (grade === 1) {
+      if (level === 1) {
+        num1 = Math.floor(Math.random() * 5) + 1;
+        num2 = Math.floor(Math.random() * 5) + 1;
+        op = "+";
+        ans = num1 + num2;
+      } else if (level === 2) {
+        num1 = Math.floor(Math.random() * 9) + 1;
+        num2 = Math.floor(Math.random() * 9) + 1;
+        op = "+";
+        ans = num1 + num2;
+      } else if (level === 3) {
+        num1 = Math.floor(Math.random() * 5) + 1;
+        num2 = Math.floor(Math.random() * 5) + 1;
+        if (num1 < num2) [num1, num2] = [num2, num1];
+        if (num1 === num2) num1 += 1;
+        op = "-";
+        ans = num1 - num2;
+      } else if (level === 4) {
+        num1 = Math.floor(Math.random() * 9) + 1;
+        num2 = Math.floor(Math.random() * 9) + 1;
+        if (num1 < num2) [num1, num2] = [num2, num1];
+        if (num1 === num2) num1 += 1;
+        op = "-";
+        ans = num1 - num2;
+      } else if (level === 5) {
+        // -9 から +9 までの2数の加法・減法
+        num1 = getRandomInt(-9, 9);
+        num2 = getRandomInt(-9, 9);
+        op = Math.random() < 0.5 ? "+" : "-";
+
+        ans = (op === "+") ? num1 + num2 : num1 - num2;
+
+        const str1 = num1 < 0 ? `(${num1})` : `${num1}`;
+        const str2 = num2 < 0 ? `(${num2})` : `${num2}`;
+
+        return { text: `${str1} ${op} ${str2} =`, answer: ans };
+      }
+    } else if (grade === 2) {
+      if (level === 1) {
+        op = "+";
+        let tens1 = Math.floor(Math.random() * 8) + 1;
+        let ones1 = Math.floor(Math.random() * 9);
+        let tens2 = Math.floor(Math.random() * (9 - tens1));
+        let ones2 = Math.floor(Math.random() * (10 - ones1));
+        num1 = tens1 * 10 + ones1;
+        num2 = tens2 * 10 + ones2;
+        if (num2 === 0) num2 = Math.floor(Math.random() * 8) + 1;
+      } else if (level === 2) {
+        op = "+";
+        let ones1 = Math.floor(Math.random() * 8) + 2;
+        let ones2 = Math.floor(Math.random() * (9 - (10 - ones1))) + (10 - ones1);
+        let tens1 = Math.floor(Math.random() * 8) + 1;
+        let tens2 = Math.floor(Math.random() * (8 - tens1));
+        num1 = tens1 * 10 + ones1;
+        num2 = tens2 * 10 + ones2;
+      } else if (level === 3) {
+        op = "-";
+        let tens1 = Math.floor(Math.random() * 8) + 2;
+        let ones1 = Math.floor(Math.random() * 9) + 1;
+        let tens2 = Math.floor(Math.random() * tens1);
+        let ones2 = Math.floor(Math.random() * (ones1 + 1));
+        num1 = tens1 * 10 + ones1;
+        num2 = tens2 * 10 + ones2;
+        if (num1 === num2) num2 -= 1;
+      } else if (level === 4) {
+        op = "-";
+        let tens1 = Math.floor(Math.random() * 8) + 2;
+        let ones1 = Math.floor(Math.random() * 9);
+        let ones2 = Math.floor(Math.random() * (9 - ones1)) + ones1 + 1;
+        let tens2 = Math.floor(Math.random() * tens1);
+        num1 = tens1 * 10 + ones1;
+        num2 = tens2 * 10 + ones2;
+      }
+      ans = (op === "+") ? num1 + num2 : num1 - num2;
+    } else if (grade === 3) {
+      let targetLevel = level;
+      if (level === 4) {
+        targetLevel = Math.random() < 0.5 ? 2 : 3;
+      }
+
+      if (targetLevel === 1) {
+        num1 = Math.floor(Math.random() * 9) + 1;
+        num2 = Math.floor(Math.random() * 9) + 1;
+        op = "×";
+        ans = num1 * num2;
+      } else if (targetLevel === 2) {
+        let a = Math.floor(Math.random() * 9) + 1;
+        let b = Math.floor(Math.random() * 9) + 1;
+        num1 = a * b;
+        num2 = a;
+        op = "÷";
+        ans = b;
+      } else if (targetLevel === 3) {
+        if (Math.random() < 0.5) {
+          num1 = Math.floor(Math.random() * 89) + 11;
+          num2 = Math.floor(Math.random() * 8) + 2;
+          op = "×";
+          ans = num1 * num2;
+        } else {
+          ans = Math.floor(Math.random() * 80) + 10;
+          num2 = Math.floor(Math.random() * 8) + 2;
+          num1 = ans * num2;
+          op = "÷";
+        }
+      }
+    }
+
+    return { text: `${num1} ${op} ${num2} =`, answer: ans };
+  }
+
+  function nextQuestion() {
+    if (currentQuestionIndex >= TOTAL_QUESTIONS) {
+      showResults();
+      return;
+    }
+
+    currentQuestionIndex++;
+    inputVal = "";
+    updateInputDisplay();
+    updateStatsDisplay();
+
+    const q = generateProblem(currentGrade, currentLevel);
+    currentAnswer = q.answer;
+
+    document.getElementById('problem-text').textContent = q.text;
+  }
+
+  function updateStatsDisplay() {
+    document.getElementById('question-count').textContent = `${currentQuestionIndex} / ${TOTAL_QUESTIONS} 問`;
+    
+    const completedQuestions = currentQuestionIndex - 1;
+    const accuracy = completedQuestions > 0 ? Math.round((score / completedQuestions) * 100) : 0;
+    document.getElementById('accuracy-rate').textContent = `正答率: ${accuracy}%`;
+
+    const progressPercent = (completedQuestions / TOTAL_QUESTIONS) * 100;
+    document.getElementById('progress-fill').style.width = `${progressPercent}%`;
+  }
+
+  function inputNum(num) {
+    if (inputVal.length < 5) {
+      inputVal += num;
+      updateInputDisplay();
+    }
+  }
+
+  function inputMinus() {
+    if (inputVal === "") {
+      inputVal = "-";
+      updateInputDisplay();
+    } else if (inputVal === "-") {
+      inputVal = "";
+      updateInputDisplay();
+    }
+  }
+
+  function clearInput() {
+    inputVal = "";
+    updateInputDisplay();
+  }
+
+  function updateInputDisplay() {
+    document.getElementById('answer-display').textContent = inputVal;
+  }
+
+  function submitAnswer() {
+    if (inputVal === "" || inputVal === "-") return;
+
+    if (parseInt(inputVal, 10) === currentAnswer) {
+      score++;
+    }
+
+    nextQuestion();
+  }
+
+  function giveUp() {
+    showResults(true);
+  }
+
+  function showResults(isGiveUp = false) {
+    showScreen('screen-result');
+    const statusEl = document.getElementById('result-status');
+    const scoreEl = document.getElementById('result-score');
+    const nextBtn = document.getElementById('next-btn');
+
+    const answeredCount = isGiveUp ? Math.max(0, currentQuestionIndex - 1) : TOTAL_QUESTIONS;
+    scoreEl.textContent = `${answeredCount}問中 ${score} 問 正解`;
+
+    if (isGiveUp) {
+      statusEl.textContent = "ギブアップ";
+      statusEl.className = "result-status status-fail";
+    } else if (score >= 8) {
+      statusEl.textContent = "合格";
+      statusEl.className = "result-status status-pass";
+    } else {
+      statusEl.textContent = "もう一度頑張ろう";
+      statusEl.className = "result-status status-fail";
+    }
+
+    const maxLevel = levelConfigs[currentGrade].length;
+
+    if (currentLevel === maxLevel) {
+      if (currentGrade < 3) {
+        nextBtn.textContent = "次のグレード";
+      } else {
+        nextBtn.textContent = "グレード選択に戻る";
+      }
+    } else {
+      nextBtn.textContent = "次のレベル";
+    }
+  }
+
+  function retryLevel() {
+    startLevel(currentLevel);
+  }
+
+  function nextLevelOrGrade() {
+    const maxLevel = levelConfigs[currentGrade].length;
+
+    if (currentLevel < maxLevel) {
+      startLevel(currentLevel + 1);
+    } else {
+      if (currentGrade < 3) {
+        selectGrade(currentGrade + 1);
+      } else {
+        showScreen('screen-grade');
+      }
+    }
+  }
+
+  document.addEventListener('keydown', (e) => {
+    const activeScreen = document.querySelector('.screen.active');
+    if (!activeScreen || activeScreen.id !== 'screen-training') return;
+
+    if (e.key >= '0' && e.key <= '9') {
+      inputNum(parseInt(e.key, 10));
+    } else if (e.key === '-') {
+      inputMinus();
+    } else if (e.key === 'Backspace') {
+      clearInput();
+    } else if (e.key === 'Enter') {
+      submitAnswer();
+    }
+  });
+</script>
+
+</body>
+</html>
