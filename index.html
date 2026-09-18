@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>計算トレーニング - グレード1〜3</title>
+  <title>計算トレーニング - グレード1〜4</title>
   <style>
     * {
       box-sizing: border-box;
@@ -150,6 +150,12 @@
       flex-wrap: wrap;
     }
 
+    sup {
+      font-size: 0.6em;
+      vertical-align: super;
+      margin-left: 2px;
+    }
+
     .answer-box {
       min-width: 100px;
       height: 70px;
@@ -225,6 +231,46 @@
       border-color: #feb2b2;
     }
 
+    /* 正誤判定のフィードバック表示スタイル */
+    .feedback-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.85);
+      border-radius: 16px;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      pointer-events: none;
+    }
+
+    .feedback-overlay.active {
+      display: flex;
+    }
+
+    .feedback-mark {
+      font-size: 10rem;
+      font-weight: bold;
+      line-height: 1;
+      animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .feedback-mark.correct {
+      color: #38a169;
+    }
+
+    .feedback-mark.incorrect {
+      color: #e53e3e;
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.5); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
     .result-box {
       text-align: center;
       margin: auto 0;
@@ -297,6 +343,11 @@
 
 <div class="app-container">
 
+  <!-- フィードバック（〇/✖）表示用オーバーレイ -->
+  <div id="feedback-overlay" class="feedback-overlay">
+    <div id="feedback-mark" class="feedback-mark"></div>
+  </div>
+
   <!-- 1. グレード選択画面 -->
   <div id="screen-grade" class="screen active">
     <div class="header">
@@ -321,6 +372,13 @@
         <div>
           <div class="card-title">グレード３</div>
           <div class="card-desc">掛け算（九九）と割り算</div>
+        </div>
+        <div class="card-badge">挑戦する</div>
+      </div>
+      <div class="card" onclick="selectGrade(4)">
+        <div>
+          <div class="card-title">グレード４</div>
+          <div class="card-desc">累乗の計算（2乗・3乗・積）</div>
         </div>
         <div class="card-badge">挑戦する</div>
       </div>
@@ -400,8 +458,10 @@
   let score = 0;
   let currentAnswer = 0;
   let inputVal = "";
+  let isProcessing = false; // 判定中の誤動作を防ぐフラグ
 
   const TOTAL_QUESTIONS = 10;
+  const MAX_GRADE = 4;
 
   const levelConfigs = {
     1: [
@@ -422,6 +482,13 @@
       { title: "レベル2", desc: "割り算（あまりなし・九九の逆）" },
       { title: "レベル3", desc: "2桁×1桁・大きな数の割り算" },
       { title: "レベル4", desc: "掛け算と割り算のミックス" }
+    ],
+    4: [
+      { title: "レベル1", desc: "2の累乗（2² ～ 2⁶）" },
+      { title: "レベル2", desc: "1桁の2乗（2² ～ 9²）" },
+      { title: "レベル3", desc: "1〜5の3乗（2³ ～ 5³）" },
+      { title: "レベル4", desc: "10の累乗・負の数の累乗" },
+      { title: "レベル5", desc: "累乗の掛け算（底2〜6・結果3桁まで）" }
     ]
   };
 
@@ -458,6 +525,7 @@
     currentLevel = level;
     currentQuestionIndex = 0;
     score = 0;
+    isProcessing = false;
     document.getElementById('training-level-title').textContent = `グレード${currentGrade} - レベル ${level}`;
     showScreen('screen-training');
     nextQuestion();
@@ -496,7 +564,6 @@
         op = "-";
         ans = num1 - num2;
       } else if (level === 5) {
-        // -9 から +9 までの2数の加法・減法
         num1 = getRandomInt(-9, 9);
         num2 = getRandomInt(-9, 9);
         op = Math.random() < 0.5 ? "+" : "-";
@@ -508,6 +575,8 @@
 
         return { text: `${str1} ${op} ${str2} =`, answer: ans };
       }
+      ans = (op === "+") ? num1 + num2 : num1 - num2;
+
     } else if (grade === 2) {
       if (level === 1) {
         op = "+";
@@ -545,6 +614,7 @@
         num2 = tens2 * 10 + ones2;
       }
       ans = (op === "+") ? num1 + num2 : num1 - num2;
+
     } else if (grade === 3) {
       let targetLevel = level;
       if (level === 4) {
@@ -576,6 +646,45 @@
           op = "÷";
         }
       }
+
+    } else if (grade === 4) {
+      if (level === 1) {
+        let exp = Math.floor(Math.random() * 5) + 2; // 2~6
+        ans = Math.pow(2, exp);
+        return { text: `2<sup>${exp}</sup> =`, answer: ans };
+      } else if (level === 2) {
+        let base = Math.floor(Math.random() * 8) + 2; // 2~9
+        ans = base * base;
+        return { text: `${base}<sup>2</sup> =`, answer: ans };
+      } else if (level === 3) {
+        let base = Math.floor(Math.random() * 4) + 2; // 2~5
+        ans = Math.pow(base, 3);
+        return { text: `${base}<sup>3</sup> =`, answer: ans };
+      } else if (level === 4) {
+        if (Math.random() < 0.5) {
+          let exp = Math.floor(Math.random() * 2) + 2; // 2~3
+          ans = Math.pow(10, exp);
+          return { text: `10<sup>${exp}</sup> =`, answer: ans };
+        } else {
+          let base = (Math.floor(Math.random() * 4) + 2) * -1; // -2~-5
+          let exp = Math.floor(Math.random() * 2) + 2; // 2~3
+          ans = Math.pow(base, exp);
+          return { text: `(${base})<sup>${exp}</sup> =`, answer: ans };
+        }
+      } else if (level === 5) {
+        let base1, exp1, base2, exp2, p1, p2;
+        do {
+          base1 = Math.floor(Math.random() * 5) + 2; // 2~6
+          exp1 = Math.floor(Math.random() * 3) + 2;  // 2~4
+          base2 = Math.floor(Math.random() * 5) + 2; // 2~6
+          exp2 = Math.floor(Math.random() * 3) + 2;  // 2~4
+          p1 = Math.pow(base1, exp1);
+          p2 = Math.pow(base2, exp2);
+          ans = p1 * p2;
+        } while (ans > 999 || ans < 10);
+
+        return { text: `${base1}<sup>${exp1}</sup> × ${base2}<sup>${exp2}</sup> =`, answer: ans };
+      }
     }
 
     return { text: `${num1} ${op} ${num2} =`, answer: ans };
@@ -595,7 +704,7 @@
     const q = generateProblem(currentGrade, currentLevel);
     currentAnswer = q.answer;
 
-    document.getElementById('problem-text').textContent = q.text;
+    document.getElementById('problem-text').innerHTML = q.text;
   }
 
   function updateStatsDisplay() {
@@ -610,6 +719,7 @@
   }
 
   function inputNum(num) {
+    if (isProcessing) return;
     if (inputVal.length < 5) {
       inputVal += num;
       updateInputDisplay();
@@ -617,6 +727,7 @@
   }
 
   function inputMinus() {
+    if (isProcessing) return;
     if (inputVal === "") {
       inputVal = "-";
       updateInputDisplay();
@@ -627,6 +738,7 @@
   }
 
   function clearInput() {
+    if (isProcessing) return;
     inputVal = "";
     updateInputDisplay();
   }
@@ -636,16 +748,39 @@
   }
 
   function submitAnswer() {
-    if (inputVal === "" || inputVal === "-") return;
+    if (inputVal === "" || inputVal === "-" || isProcessing) return;
 
-    if (parseInt(inputVal, 10) === currentAnswer) {
+    isProcessing = true;
+    const isCorrect = parseInt(inputVal, 10) === currentAnswer;
+
+    if (isCorrect) {
       score++;
     }
 
-    nextQuestion();
+    // 正誤表示（〇 または ✖）
+    const overlay = document.getElementById('feedback-overlay');
+    const mark = document.getElementById('feedback-mark');
+
+    if (isCorrect) {
+      mark.textContent = "〇";
+      mark.className = "feedback-mark correct";
+    } else {
+      mark.textContent = "✖";
+      mark.className = "feedback-mark incorrect";
+    }
+
+    overlay.classList.add('active');
+
+    // 0.5秒（500ミリ秒）後に判定表示を消して次の問題へ進む
+    setTimeout(() => {
+      overlay.classList.remove('active');
+      isProcessing = false;
+      nextQuestion();
+    }, 500);
   }
 
   function giveUp() {
+    if (isProcessing) return;
     showResults(true);
   }
 
@@ -672,7 +807,7 @@
     const maxLevel = levelConfigs[currentGrade].length;
 
     if (currentLevel === maxLevel) {
-      if (currentGrade < 3) {
+      if (currentGrade < MAX_GRADE) {
         nextBtn.textContent = "次のグレード";
       } else {
         nextBtn.textContent = "グレード選択に戻る";
@@ -692,7 +827,7 @@
     if (currentLevel < maxLevel) {
       startLevel(currentLevel + 1);
     } else {
-      if (currentGrade < 3) {
+      if (currentGrade < MAX_GRADE) {
         selectGrade(currentGrade + 1);
       } else {
         showScreen('screen-grade');
@@ -702,7 +837,7 @@
 
   document.addEventListener('keydown', (e) => {
     const activeScreen = document.querySelector('.screen.active');
-    if (!activeScreen || activeScreen.id !== 'screen-training') return;
+    if (!activeScreen || activeScreen.id !== 'screen-training' || isProcessing) return;
 
     if (e.key >= '0' && e.key <= '9') {
       inputNum(parseInt(e.key, 10));
